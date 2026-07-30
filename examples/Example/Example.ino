@@ -11,7 +11,7 @@
     Modified day month year  // 02/18/2024
     By author's name  braydenanderson2014 (Brayden Anderson)
 
-    https://github.com/braydenanderson2014/C-Arduino-Libraries/tree/Release/README.md
+    https://github.com/braydenanderson2014/C-Arduino-Libraries/tree/main/lib/LinkedList
 
 */
 #include <BasicLinkedList.h>
