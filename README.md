@@ -1,5 +1,11 @@
 # LinkedList for Arduino
 
+
+<!-- HEALTH_BADGES_START -->
+[![Health: Unsure](https://img.shields.io/badge/Health-Unsure-9e9e9e?style=flat-square)](../../reports/library-health-report.md)
+[![Testing: Unmanaged](https://img.shields.io/badge/Testing-Unmanaged-9e9e9e?style=flat-square)](../../reports/library-health-report.md)
+<!-- HEALTH_BADGES_END -->
+
 A simple, templated linked list implementation for Arduino projects. This class allows you to create and manage a linked list of any data type.
 
 ## Features
@@ -60,6 +66,8 @@ To use `LinkedList` in your Arduino sketch:
 ### Version 1.0.7 [Current-Release]
 * Fixed an issue with the getElement() Function. The function will return the item if its found, or it will return a default constructed T() in the event an item is not found.
 * Added new add() function that will append an item to the end of the list.
+### Version 1.0.8
+* Added an internal tail pointer so append/add operations no longer traverse the full list.
 
 
 ## Currently Tested Functions
