@@ -1,5 +1,12 @@
 # BasicLinkedList for Arduino
 
+
+<!-- HEALTH_BADGES_START -->
+[![Health: Unsure](https://img.shields.io/badge/Health-Unsure-9e9e9e?style=flat-square)](https://github.com/braydenanderson2014/ArduinoLinkedList)
+[![Testing: Unmanaged](https://img.shields.io/badge/Testing-Unmanaged-9e9e9e?style=flat-square)](https://github.com/braydenanderson2014/ArduinoLinkedList)
+<!-- HEALTH_BADGES_END -->
+
+A simple, templated linked list implementation for Arduino projects. This class allows you to create and manage a linked list of any data type.
 `BasicLinkedList` is a lightweight templated singly linked list for Arduino sketches.
 
 ## Features
@@ -11,7 +18,19 @@
 
 ## Installation
 
-### Arduino IDE
+To use `LinkedList` in your Arduino sketch:
+
+1. Copy the `LinkedList` class code to your project's directory.
+2. Include `LinkedList.h` at the top of your sketch.
+
+# Arduino:
+## Change Log
+### Version 1.0.0
+* Initial Release
+### Version 1.0.1
+* Fixed an issue with the getElement() Function. The function will return the item if its found, or it will return a default constructed T() in the event an item is not found.
+
+
 
 1. Download or clone this repository.
 2. Place it in your Arduino `libraries` directory.
