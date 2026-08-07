@@ -1,20 +1,20 @@
-# BasicLinkedList for Arduino
+# LinkedList for Arduino
 
 
 <!-- HEALTH_BADGES_START -->
-[![Health: Unsure](https://img.shields.io/badge/Health-Unsure-9e9e9e?style=flat-square)](https://github.com/braydenanderson2014/ArduinoLinkedList)
-[![Testing: Unmanaged](https://img.shields.io/badge/Testing-Unmanaged-9e9e9e?style=flat-square)](https://github.com/braydenanderson2014/ArduinoLinkedList)
+[![Health: Unsure](https://img.shields.io/badge/Health-Unsure-9e9e9e?style=flat-square)](../../reports/library-health-report.md)
+[![Testing: Tested](https://img.shields.io/badge/Testing-Tested-2ea44f?style=flat-square)](../../reports/library-health-report.md)
 <!-- HEALTH_BADGES_END -->
 
 A simple, templated linked list implementation for Arduino projects. This class allows you to create and manage a linked list of any data type.
-`BasicLinkedList` is a lightweight templated singly linked list for Arduino sketches.
 
 ## Features
 
-- Stores any copyable data type
-- Supports append, prepend, indexed insert, indexed removal, value removal, lookup, and clear operations
-- Returns pointers for direct access with `get()`
-- Exposes `Optional<T>`-based helpers for safer reads with `getElement()`, `find()`, and `operator[]`
+- Templated class: Can store any data type.
+- Dynamic resizing: Automatically manages memory as elements are added or removed.
+- Basic operations: `append`, `prepend`, `insert`, `remove`, `get`, `contains`, `getSize`, `isEmpty`, `clear`.
+
+## WARNING: This Library Utilizes POINTERS *. This is due to the Libraries ability to utilize any return type. (Bool, String, int, float, etc)
 
 ## Installation
 
@@ -31,105 +31,136 @@ To use `LinkedList` in your Arduino sketch:
 * Fixed an issue with the getElement() Function. The function will return the item if its found, or it will return a default constructed T() in the event an item is not found.
 
 
+==================================================================
+# PlatformIO
+## Change Log
+### Version 1.0.0
+* Initial Release
+### Version 1.0.1
+* Fixed Issues Related to Library Not Building.
+* Syntax Errors that were not discovered originally when Library was update have not been rectified. Library Should now work as intended.
+### Version 1.0.2
+* Update to README
+* Added [LINKED LIST]: to the Serial Print Statements to make it easier to debug
+* Added Overloaded Insert Function() to insert a value at a specific index
+* Added Insert Function to insert a value randomly into the list
+* Adjusted size Variable to be capitalized as Size. That way the compiler will not get confused with the size() function
+* Added an Iterator to the LinkedList. This will allow you to iterate through the list
+* This Library Has been partially tested. Please report any bugs to the Author
+### Version 1.0.3
+* Added a boolean variable to the LinkedList Constructor to determine if the LinkedList should print to the Serial Monitor or not.
+* Added a setDebug() function to set the debug variable to true or false
+* Added a getDebug() function to get the debug variable
+### Version 1.0.4
+* Added a new function called getAsString() to return the LinkedList element as a String
+* Deprecated the keyExists() and valueExists() functions. They will be removed in the next release.. (Use contains() instead)
+* Removed debug statements from the library, this is to save memory. A duplicate Library will be created with debug statements in it.
+* Added Function Comments to the Library
+### Version 1.0.5 
+* REMOVING Two Deprecated Functions -> Use contains()
+* Renamed the remove function to more closely correlate to what it does.
+* Added new remove function that takes in an index to remove to match other List Libraries.
+* Added getElement Function that returns the element instead of the pointer to the element.
+### Version 1.0.6 
+* Renaming Linked List Files (including src File) to BasicLinkedList. This is due to Arduino Library Manager Requiring Library Headers to Match Library Names. And since you cannot Duplicate Library Names, The library will be Listed the same as PlatformIO. (BasicLinkedList)
+### Version 1.0.7 [Current-Release]
+* Fixed an issue with the getElement() Function. The function will return the item if its found, or it will return a default constructed T() in the event an item is not found.
+* Added new add() function that will append an item to the end of the list.
+### Version 1.0.8
+* Added an internal tail pointer so append/add operations no longer traverse the full list.
 
-1. Download or clone this repository.
-2. Place it in your Arduino `libraries` directory.
-3. Restart the Arduino IDE if it is already open.
 
-### PlatformIO
+## Currently Tested Functions
+`cpp
+    insert(1 parameter version)
+    prepend()
+    append()
+    size()
+    get()
+`
+prepend, and append were used automatically by the insert function
 
-Add the repository to your `lib_deps` list or install it manually in your project.
+## Usage
 
-## Include
+To create a linked list, simply declare an instance of `LinkedList` with the desired type:
 
 ```cpp
 #include <BasicLinkedList.h>
+
+LinkedList<int> myList;
+```
+## Adding Elements
+### Append an element to the end of the list:
+
+```cpp
+myList.append(1);
+```
+### Prepend an element to the beginning of the list:
+
+```cpp
+myList.prepend(0);
+```
+### Insert an element at a specific position:
+
+```cpp
+myList.insert(2, 1);  // Insert '2' at position '1'
 ```
 
-## Quick Start
+```cpp
+myList.insert(1); //Insert '1' anywhere in the List.
+```
+## Accessing Elements
+### Retrieve an element at a specific position:
 
 ```cpp
-#include <BasicLinkedList.h>
+int value = myList.get(1);
+```
+## Removing Elements
+### Remove an element by value:
 
-LinkedList<int> numbers;
+```cpp
+myList.remove(1);
+```
+## Utility Functions
+### Check if the list contains a specific value:
 
-void setup() {
-    Serial.begin(9600);
-
-    numbers.append(1);
-    numbers.append(2);
-    numbers.prepend(0);
-    numbers.add(3);
-
-    int* value = numbers.get(1);
-    if (value != nullptr) {
-        Serial.println(*value);
-    }
-
-    numbers.remove(0);
-    numbers.removeElement(3);
+```cpp
+if (myList.contains(2)) {
+    // Element is in the list
 }
 ```
-
-## API Overview
-
-### Creating a list
+## Get the size of the list:
 
 ```cpp
-LinkedList<int> values;
+size_t size = myList.size();
 ```
-
-### Adding items
+### Check if the list is empty:
 
 ```cpp
-values.add(10);
-values.append(20);
-values.prepend(5);
-values.insert(15);
-values.insert(25, 3);
+if (myList.isEmpty()) {
+    // List is empty
+}
 ```
-
-### Reading items
+### Clear the list:
 
 ```cpp
-int* pointerValue = values.get(0);
-Optional<int> elementValue = values.getElement(0);
-Optional<int> indexedValue = values[0];
-String textValue = values.getAsString(0);
-Optional<size_t> foundIndex = values.find(20);
+myList.clear();
 ```
-
-### Checking list state
-
+## Example
 ```cpp
-size_t count = values.size();
-bool empty = values.isEmpty();
-bool hasTwenty = values.contains(20);
+LinkedList<int> myList;
+myList.append(1);
+myList.append(2);
+myList.prepend(0);
+myList.insert(3, 3);
+
+for (size_t i = 0; i < myList.size(); i++) {
+    Serial.print("Element at position ");
+    Serial.print(i);
+    Serial.print(": ");
+    Serial.println(myList.get(i));
+}
+
+myList.remove(2);
+myList.clear();
 ```
-
-### Removing items
-
-```cpp
-values.remove(0);        // remove by index
-values.removeElement(5); // remove by value
-values.clear();
-```
-
-## Important Notes
-
-- `get()` returns a pointer and returns `nullptr` when an index cannot be resolved.
-- `remove()` removes by index.
-- `removeElement()` removes by value.
-- `getElement()`, `find()`, and `operator[]` return `Optional<T>`-style values.
-
-## Example Sketch
-
-See `examples/Example/Example.ino` for a full sketch example.
-
-## Changelog
-
-See [CHANGELOG.md](CHANGELOG.md) for release history.
-
-## Repository Sync
-
-This mirror repository is kept aligned with the library stored in `braydenanderson2014/C-Arduino-Libraries`.
