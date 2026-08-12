@@ -116,7 +116,7 @@ myList.insert(1); //Insert '1' anywhere in the List.
 int value = myList.get(1);
 ```
 ## Removing Elements
-### Remove an element by value:
+### Remove an element by index:
 
 ```cpp
 myList.remove(1);
