@@ -55,6 +55,7 @@ jobs:
             const MARKER_SYNC = config.markers?.sync || "mirror-sync";
             const MARKER_ACTIVITY = config.markers?.activity || "mirror-activity";
             const MARKER_COMMIT_DIGEST = config.markers?.commitDigest || "mirror-commit-digest";
+            const MARKER_REOPEN_BLOCKED = config.markers?.reopenBlocked || "mirror-reopen-blocked";
             const FAST_SCHEDULE = "*/10 * * * *";
             const trackedBaseBranches = Array.isArray(config.trackedSourceBaseBranches)
               ? config.trackedSourceBaseBranches.filter(Boolean)
@@ -590,6 +591,7 @@ jobs:
 
             let closureChanges = 0;
             let reopenChanges = 0;
+            let reopenBlockedNotices = 0;
             let activityComments = 0;
             let digestChanges = 0;
 
@@ -713,6 +715,8 @@ jobs:
               }
 
               if (targetIssue.state === "open" && sourceIssue.state === "closed") {
+                let sourceReopened = false;
+
                 if (sourceIsPullRequest) {
                   let reopenedPullRequest = false;
                   try {
@@ -738,18 +742,23 @@ jobs:
                   }
 
                   if (!reopenedPullRequest) {
-                    await github.rest.issues.createComment({
+                    await upsertCommentWithMarker({
                       owner: SOURCE_OWNER,
                       repo: SOURCE_REPO,
-                      issue_number: sourceNumber,
+                      issueNumber: sourceNumber,
+                      markerNeedle: `<!-- ${MARKER_REOPEN_BLOCKED}: target=${targetRef};`,
                       body: [
                         `Mirror update: ${targetRef} was reopened, but this source pull request cannot be reopened by GitHub.`,
                         `Source PR remains closed.`,
-                        `Target URL: ${targetIssue.html_url}`
+                        `Target URL: ${targetIssue.html_url}`,
+                        "",
+                        `<!-- ${MARKER_REOPEN_BLOCKED}: target=${targetRef};updated=${new Date().toISOString()} -->`
                       ].join("\n")
                     });
-                    continue;
+                    reopenBlockedNotices += 1;
                   }
+
+                  sourceReopened = reopenedPullRequest;
                 } else {
                   await github.rest.issues.update({
                     owner: SOURCE_OWNER,
@@ -757,18 +766,21 @@ jobs:
                     issue_number: sourceNumber,
                     state: "open"
                   });
+                  sourceReopened = true;
                 }
 
-                await github.rest.issues.createComment({
-                  owner: SOURCE_OWNER,
-                  repo: SOURCE_REPO,
-                  issue_number: sourceNumber,
-                  body: [
-                    `Mirror update: ${targetRef} was reopened, so this source ${sourceType === "pull_request" ? "pull request" : "issue"} was reopened to match.`,
-                    `Target URL: ${targetIssue.html_url}`
-                  ].join("\n")
-                });
-                reopenChanges += 1;
+                if (sourceReopened) {
+                  await github.rest.issues.createComment({
+                    owner: SOURCE_OWNER,
+                    repo: SOURCE_REPO,
+                    issue_number: sourceNumber,
+                    body: [
+                      `Mirror update: ${targetRef} was reopened, so this source ${sourceType === "pull_request" ? "pull request" : "issue"} was reopened to match.`,
+                      `Target URL: ${targetIssue.html_url}`
+                    ].join("\n")
+                  });
+                  reopenChanges += 1;
+                }
               }
 
               if (relevantNewComments.length > 0) {
@@ -823,5 +835,5 @@ jobs:
             }
 
             core.info(
-              `Remote mirror sync finished. targetItems=${mirroredTargetIssues.length}, sourceDiscoveryCandidates=${sourceIssuesForDiscovery.length}, sourceLinkedItems=${sourceDiscoveredMirrors.length}, syncedItems=${mirrorsToSync.length}, recentSourcePrs=${recentSourcePullRequests.length}, closed=${closureChanges}, reopened=${reopenChanges}, activityComments=${activityComments}, digestUpdates=${digestChanges}`
+              `Remote mirror sync finished. targetItems=${mirroredTargetIssues.length}, sourceDiscoveryCandidates=${sourceIssuesForDiscovery.length}, sourceLinkedItems=${sourceDiscoveredMirrors.length}, syncedItems=${mirrorsToSync.length}, recentSourcePrs=${recentSourcePullRequests.length}, closed=${closureChanges}, reopened=${reopenChanges}, reopenBlockedNotices=${reopenBlockedNotices}, activityComments=${activityComments}, digestUpdates=${digestChanges}`
             );
