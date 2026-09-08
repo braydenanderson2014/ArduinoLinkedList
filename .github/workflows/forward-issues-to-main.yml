@@ -105,15 +105,31 @@ jobs:
             // Only forward issues/PRs opened by outside contributors. Bots and
             // maintainers (owner/member/collaborator on the source repo) are
             // excluded so their issues/PRs stay local instead of being mirrored.
+            // An explicit override lets a bot/maintainer item still be forwarded:
+            // apply the "force-forward" label, or include a `[forward]` tag
+            // (case-insensitive) anywhere in the title or body.
             const MAINTAINER_ASSOCIATIONS = new Set(["OWNER", "MEMBER", "COLLABORATOR"]);
+            const FORCE_FORWARD_LABEL = "force-forward";
+            const FORCE_FORWARD_TAG_REGEX = /\[forward\]/i;
             const isBotUser = (user) => {
               const login = String(user?.login || "");
               return user?.type === "Bot" || login.toLowerCase().endsWith("[bot]");
             };
             const isMaintainerAssociation = (authorAssociation) =>
               MAINTAINER_ASSOCIATIONS.has(String(authorAssociation || "").toUpperCase());
-            const shouldSkipForwardingForAuthor = (user, authorAssociation) =>
-              isBotUser(user) || isMaintainerAssociation(authorAssociation);
+            const hasForceForwardOverride = (labels, title, body) => {
+              const hasLabel = (labels || []).some(
+                (label) => String(label?.name || label || "").trim().toLowerCase() === FORCE_FORWARD_LABEL
+              );
+              const hasTag = FORCE_FORWARD_TAG_REGEX.test(String(title || "")) || FORCE_FORWARD_TAG_REGEX.test(String(body || ""));
+              return hasLabel || hasTag;
+            };
+            const shouldSkipForwardingForAuthor = (user, authorAssociation, labels, title, body) => {
+              if (hasForceForwardOverride(labels, title, body)) {
+                return false;
+              }
+              return isBotUser(user) || isMaintainerAssociation(authorAssociation);
+            };
 
             const getProjectNode = async (owner, projectNumber) => {
               const userQuery = `
@@ -359,7 +375,7 @@ jobs:
                 return;
               }
 
-              if (shouldSkipForwardingForAuthor(issue.user, issue.author_association)) {
+              if (shouldSkipForwardingForAuthor(issue.user, issue.author_association, issue.labels, issue.title, issue.body)) {
                 core.info(`Issue #${issue.number} was opened by a bot or maintainer (@${issue.user?.login || "unknown"}, association=${issue.author_association || "unknown"}). Skipping forward operation.`);
                 return;
               }
@@ -389,7 +405,7 @@ jobs:
                 return;
               }
 
-              if (shouldSkipForwardingForAuthor(pullRequest.user, pullRequest.author_association)) {
+              if (shouldSkipForwardingForAuthor(pullRequest.user, pullRequest.author_association, pullRequest.labels, pullRequest.title, pullRequest.body)) {
                 core.info(`Pull request #${pullRequest.number} was opened by a bot or maintainer (@${pullRequest.user?.login || "unknown"}, association=${pullRequest.author_association || "unknown"}). Skipping forward operation.`);
                 return;
               }
@@ -441,7 +457,7 @@ jobs:
                   return;
                 }
 
-                if (shouldSkipForwardingForAuthor(pullRequest.user, pullRequest.author_association)) {
+                if (shouldSkipForwardingForAuthor(pullRequest.user, pullRequest.author_association, pullRequest.labels, pullRequest.title, pullRequest.body)) {
                   core.info(`Pull request #${requestedPrNumber} was opened by a bot or maintainer (@${pullRequest.user?.login || "unknown"}, association=${pullRequest.author_association || "unknown"}). Skipping forward operation.`);
                   return;
                 }
@@ -479,7 +495,7 @@ jobs:
                     continue;
                   }
 
-                  if (shouldSkipForwardingForAuthor(pullRequest.user, pullRequest.author_association)) {
+                  if (shouldSkipForwardingForAuthor(pullRequest.user, pullRequest.author_association, pullRequest.labels, pullRequest.title, pullRequest.body)) {
                     core.info(`Pull request #${pullRequest.number} was opened by a bot or maintainer (@${pullRequest.user?.login || "unknown"}, association=${pullRequest.author_association || "unknown"}). Skipping forward operation.`);
                     continue;
                   }
