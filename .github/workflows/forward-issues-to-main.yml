@@ -102,6 +102,19 @@ jobs:
               return SYNC_PULL_REQUEST_TITLE_REGEX.test(title) || SYNC_PULL_REQUEST_BRANCH_REGEX.test(headRef);
             };
 
+            // Only forward issues/PRs opened by outside contributors. Bots and
+            // maintainers (owner/member/collaborator on the source repo) are
+            // excluded so their issues/PRs stay local instead of being mirrored.
+            const MAINTAINER_ASSOCIATIONS = new Set(["OWNER", "MEMBER", "COLLABORATOR"]);
+            const isBotUser = (user) => {
+              const login = String(user?.login || "");
+              return user?.type === "Bot" || login.toLowerCase().endsWith("[bot]");
+            };
+            const isMaintainerAssociation = (authorAssociation) =>
+              MAINTAINER_ASSOCIATIONS.has(String(authorAssociation || "").toUpperCase());
+            const shouldSkipForwardingForAuthor = (user, authorAssociation) =>
+              isBotUser(user) || isMaintainerAssociation(authorAssociation);
+
             const getProjectNode = async (owner, projectNumber) => {
               const userQuery = `
                 query($owner: String!, $number: Int!) {
@@ -346,6 +359,11 @@ jobs:
                 return;
               }
 
+              if (shouldSkipForwardingForAuthor(issue.user, issue.author_association)) {
+                core.info(`Issue #${issue.number} was opened by a bot or maintainer (@${issue.user?.login || "unknown"}, association=${issue.author_association || "unknown"}). Skipping forward operation.`);
+                return;
+              }
+
               workItems.push({
                 sourceTypeLabel: "issue",
                 isIssueFlow: true,
@@ -368,6 +386,11 @@ jobs:
               const pullRequest = context.payload.pull_request;
               if (isSyncGeneratedPullRequest(pullRequest)) {
                 core.info(`Pull request #${pullRequest.number} matches sync-generated patterns. Skipping forward operation.`);
+                return;
+              }
+
+              if (shouldSkipForwardingForAuthor(pullRequest.user, pullRequest.author_association)) {
+                core.info(`Pull request #${pullRequest.number} was opened by a bot or maintainer (@${pullRequest.user?.login || "unknown"}, association=${pullRequest.author_association || "unknown"}). Skipping forward operation.`);
                 return;
               }
 
@@ -418,6 +441,11 @@ jobs:
                   return;
                 }
 
+                if (shouldSkipForwardingForAuthor(pullRequest.user, pullRequest.author_association)) {
+                  core.info(`Pull request #${requestedPrNumber} was opened by a bot or maintainer (@${pullRequest.user?.login || "unknown"}, association=${pullRequest.author_association || "unknown"}). Skipping forward operation.`);
+                  return;
+                }
+
                 workItems.push({
                   sourceTypeLabel: "pull request",
                   isIssueFlow: false,
@@ -448,6 +476,11 @@ jobs:
                 for (const pullRequest of openPullRequests) {
                   if (isSyncGeneratedPullRequest(pullRequest)) {
                     core.info(`Pull request #${pullRequest.number} matches sync-generated patterns. Skipping forward operation.`);
+                    continue;
+                  }
+
+                  if (shouldSkipForwardingForAuthor(pullRequest.user, pullRequest.author_association)) {
+                    core.info(`Pull request #${pullRequest.number} was opened by a bot or maintainer (@${pullRequest.user?.login || "unknown"}, association=${pullRequest.author_association || "unknown"}). Skipping forward operation.`);
                     continue;
                   }
 
